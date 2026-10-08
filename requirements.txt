@@ -1,0 +1,10 @@
+torch
+torchvision
+pandas
+numpy
+scikit-learn
+scikit-posthocs
+matplotlib
+seaborn
+tqdm
+jupyter
