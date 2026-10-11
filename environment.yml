@@ -1,0 +1,21 @@
+name: skin-cancer-umwdm
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pytorch
+  - torchvision
+  - numpy
+  - pandas
+  - scikit-learn
+  - scipy
+  - matplotlib
+  - seaborn
+  - tqdm
+  - jupyter
+  - pytest
+  - pip:
+    - scikit-posthocs
