@@ -47,7 +47,7 @@ def download_artifacts(
     if not dataset:
         dataset = os.getenv(
             "KAGGLE_ARTIFACTS_DATASET",
-            "twoj-team/skin-cancer-models-artifacts",
+            "rafalwodzinski/skin-cancer-models-artifacts",
         )
 
     print(f"[INFO] Pobieranie artefaktów ze zbioru '{dataset}' do: {target_path}")
