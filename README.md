@@ -121,8 +121,8 @@ Do komunikacji z Kaggle API (pobieranie surowych danych i artefaktów modeli) wy
    KAGGLE_KEY=twoj_klucz_api_kaggle
 
    # Identyfikatory prywatnych zbiorów zespołu:
-   KAGGLE_RAW_DATASET=rafalwodzinski/isic2024
-   KAGGLE_ARTIFACTS_DATASET=twoj-team/skin-cancer-models-artifacts
+   KAGGLE_RAW_DATASET="rafalwodzinski/isic2024"
+   KAGGLE_ARTIFACTS_DATASET="rafalwodzinski/skin-cancer-models-artifacts"
    ```
 > [!NOTE]
 > Plik `.env` jest ignorowany przez `.gitignore` i nie zostanie przypadkowo wypchnięty do repozytorium.
