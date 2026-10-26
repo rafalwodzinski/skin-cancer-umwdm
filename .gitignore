@@ -88,12 +88,12 @@ kaggle.json
 *.h5
 
 # Datasets, local outputs and images
-data/
+#data/
 images/
 images_processed/
 ISIC2019/
 results/
-models/
+#models/
 outputs/
 runs/
 wandb/
