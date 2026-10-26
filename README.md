@@ -18,25 +18,36 @@ skin-cancer-umwdm/
 ├── train.py                  # Główny skrypt CLI do treningu pojedynczego foldu
 ├── environment.yml           # Definicja środowiska Conda / Mamba
 ├── requirements.txt          # Zależności dla instalatora pip / venv
+├── .env.example              # Szablon konfiguracji zmiennych środowiskowych i Kaggle API
 ├── .gitignore                # Reguły ignorowania plików dla Git
 ├── README.md                 # Dokumentacja projektu
+│
+├── data/                     # Katalog danych lokalnych (ignorowany w git)
+│   ├── raw/                  # Surowe wycinki obrazów i metadane ISIC 2024 (.gitkeep)
+│   └── processed/            # Przetworzone zbiory danych i cechy (.gitkeep)
+│
+├── models/                   # Lokalne wagi modeli i artefakty (.pth, .parquet) (.gitkeep)
 │
 ├── src/                      # Kod źródłowy (pakiet modularny)
 │   ├── __init__.py
 │   ├── data/
 │   │   ├── __init__.py
-│   │   └── dataset.py        # Klasa ISICDataset, transformacje, get_fold_data
+│   │   ├── dataset.py        # Klasa ISICDataset, transformacje, get_fold_data
+│   │   └── download_data.py  # Pobieranie surowych danych ISIC 2024 z Kaggle API do data/raw/
 │   ├── models/
 │   │   ├── __init__.py
 │   │   ├── densenet.py       # Architektura DenseNet-121, ekstraktor cech
 │   │   └── trainer.py        # Klasa Trainer (dwuetapowy trening, early stopping, get_loss)
 │   └── utils/
 │       ├── __init__.py
+│       ├── artifact_sync.py  # Synchronizacja (download/upload) artefaktów modeli z Kaggle
+│       ├── device_check.py   # Weryfikacja akceleratora sprzętowego (CUDA / MPS / CPU)
 │       └── metrics.py        # Obliczanie metryk (specyficzność, MCC, czułość, precyzja, acc)
 │
 ├── tests/                    # Pakiet testów jednostkowych (pytest)
 │   ├── __init__.py
 │   ├── conftest.py           # Fixtury (syntetyczne obrazy, ramki metadanych)
+│   ├── test_data_infrastructure.py # Testy infrastruktury danych, Kaggle API i akceleratorów
 │   ├── test_dataset.py       # Testy kształtu tensorów Dataset/DataLoader i podziału foldów
 │   ├── test_densenet.py      # Testy forward pass na dummy tensorze i ekstraktora
 │   ├── test_metrics.py       # Weryfikacja obliczeń matematycznych metryk diagnostycznych
@@ -92,6 +103,88 @@ source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+---
+
+## 🔑 Konfiguracja zmiennych środowiskowych (`.env`)
+
+Do komunikacji z Kaggle API (pobieranie surowych danych i artefaktów modeli) wymagane są klucze uwierzytelniające.
+
+1. Utwórz lokalny plik `.env` na podstawie szablonu:
+   ```bash
+   cp .env.example .env
+   ```
+2. Pobierz swój token z Kaggle: przejdź do profilu [Kaggle](https://www.kaggle.com/) -> `Settings` -> sekcja `API` -> `Create New Token` (pobierze się plik `kaggle.json`).
+3. Uzupełnij w pliku `.env` swoje wartości:
+   ```env
+   KAGGLE_USERNAME=twoj_login_kaggle
+   KAGGLE_KEY=twoj_klucz_api_kaggle
+
+   # Identyfikatory prywatnych zbiorów zespołu:
+   KAGGLE_RAW_DATASET=rafalwodzinski/isic2024
+   KAGGLE_ARTIFACTS_DATASET=twoj-team/skin-cancer-models-artifacts
+   ```
+> [!NOTE]
+> Plik `.env` jest ignorowany przez `.gitignore` i nie zostanie przypadkowo wypchnięty do repozytorium.
+
+---
+
+## ⚡ Weryfikacja akceleracji sprzętowej (`device_check.py`)
+
+Aby upewnić się, że PyTorch poprawnie wykrywa akcelerację sprzętową (**NVIDIA CUDA** lub **Apple Silicon MPS**):
+
+```bash
+python src/utils/device_check.py
+```
+
+Skrypt weryfikuje dostępność w hierarchii: `cuda` -> `mps` -> `cpu` i wyświetli aktywne urządzenie oraz wersję PyTorch.
+
+---
+
+## 📦 Architektura danych i synchronizacja Kaggle API
+
+Repozytorium GitHub nie przechowuje dużych plików binarnych (obrazów, plików wag `.pth`, wektorów `.parquet`). Wszystkie dane przechowywane są na platformie Kaggle.
+
+> [!IMPORTANT]
+> **Zasada podziału zadań w zespole:**
+> - **Surowe obrazy (`download_data.py`) pobierają TYLKO osoby trenujące sieci konwolucyjne / wizyjne na mocnym sprzęcie.**
+> - **Reszta zespołu NIE pobiera surowych danych! Wszyscy pozostali członkowie zespołu korzystają wyłącznie ze współdzielonych wag modeli i wyekstrahowanych cech przy użyciu `src/utils/artifact_sync.py`.**
+
+### 1. Pobieranie surowych danych ISIC 2024 (Tylko trening wizyjny)
+
+```bash
+# Bezpieczne pobranie surowych danych do data/raw/ w korzeniu projektu:
+python src/data/download_data.py
+
+# Wymuszenie ponownego pobrania nawet jeśli dane już istnieją:
+python src/data/download_data.py --force
+```
+
+Skrypt automatycznie sprawdza obecność danych w `data/raw/` (pomijając `.gitkeep`), a jeśli katalog nie jest pusty, informuje o tym i pomija ponowne pobieranie.
+
+### 2. Współdzielenie artefaktów i wag modeli (`artifact_sync.py`)
+
+Katalog `models/` w korzeniu projektu służy do wymiany wag modeli `.pth`, metadanych oraz wyekstrahowanych embeddingów `.parquet`:
+
+```bash
+# Pobranie najnowszych modeli i artefaktów do folderu models/:
+python src/utils/artifact_sync.py --download
+
+# Wypchnięcie nowej wersji wytrenowanych modeli na Kaggle:
+python src/utils/artifact_sync.py --upload -m "Wytrenowane wagi DenseNet-121 fold 0 (MCC: 0.74)"
+```
+
+Funkcje te można również importować bezpośrednio w kodzie Python:
+```python
+from src.utils.artifact_sync import download_artifacts, upload_artifacts
+
+# Pobranie artefaktów do katalogu models/ w korzeniu projektu
+download_artifacts()
+
+# Upload nowej wersji po treningu
+upload_artifacts(folder_to_upload="models/", version_notes="Nowe wagi DenseNet")
+```
+
 
 ---
 

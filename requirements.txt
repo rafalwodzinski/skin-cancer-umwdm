@@ -9,3 +9,5 @@ seaborn
 tqdm
 jupyter
 pytest
+python-dotenv
+kaggle
