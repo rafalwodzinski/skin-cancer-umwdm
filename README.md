@@ -287,6 +287,11 @@ python train.py \
 4. **Porównanie statystyczne (`old_notebooks/04_models_comparison.ipynb`):**
    * Test Friedmana oraz test post-hoc Nemenyiego potwierdzające istotną statystycznie przewagę podejścia hybrydowego (DenseNet + SVM) nad klasycznym softmaxem.
 
+5. **EDA kliniczna ISIC 2019 (`01_clinical_eda.ipynb`):**
+   * Analiza pięciu najliczniejszych klas, wieku, płci, lokalizacji anatomicznej i braków danych; testy chi-kwadrat oraz Kruskala-Wallisa.
+   * Gdy brakuje CSV, pobiera automatycznie oficjalne metadane i ground truth ISIC 2019 (bez obrazów) do `data/raw/`; można też wskazać własne pliki zmiennymi `ISIC_2019_METADATA` i `ISIC_2019_GROUND_TRUTH`.
+   * Eksportuje cztery wykresy do `figures/eda/` oraz raport do `reports/clinical_eda_statistics.md`.
+
 ---
 
 ## 👤 Autor
