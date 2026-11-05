@@ -4,6 +4,7 @@ pandas
 numpy
 scikit-learn
 scikit-posthocs
+scipy
 matplotlib
 seaborn
 tqdm
